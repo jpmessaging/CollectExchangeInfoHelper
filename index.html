@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>CollectExchangeInfoHelper</title>
+    <meta charset="utf-8" />
+    <style>
+        .button {
+            background-color: #4cae4f;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        
+        #miscsFilterInput {
+            background-position: 10px 12px;
+            background-repeat: no-repeat;
+            width: 80%;
+            font-size: 16px;
+            padding: 12px 20px 12px 40px;
+            border: 1px solid #ddd;
+            margin-bottom: 12px;
+        }
+        
+        #miscs {
+            height: 4000px;
+        }
+        
+        #outputArea {
+            width: 50%;
+            height: 50%;
+            float: left;
+        }
+        
+        #inputArea {
+            width: 50%;
+            height: 50%;
+            float: left;
+        }
+        
+        .copied {
+            opacity: 1;
+            visibility: hidden;
+            transition: opacity 2s;
+            color: #4f93db;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body onload="initialize()">
+    <h1>
+        <a href="https://github.com/jpmessaging/CollectExchangeInfo">
+        CollectExchangeInfo
+      </a> Helper
+    </h1>
+
+    <div id="inputArea">
+        <div id="main">
+            <input type="checkbox" id="IncludeEventLogs" name=" -IncludeEventLogs" onchange="UpdateOutputString();" />
+            <label for="IncludeEventLogs">Event logs</label>
+            <br />
+            <input type="checkbox" id="IncludeEventLogsWithCrimson" name=" -IncludeEventLogsWithCrimson" onchange="UpdateOutputString();" />
+            <label for="IncludeEventLogsWithCrimson">
+          Event logs including crimson logs (Managed availablity, High
+          availability, etc...)
+        </label>
+            <br />
+            <input type="checkbox" id="IncludePerformanceLog" name=" -IncludePerformanceLog" onchange="UpdateOutputString();" />
+            <label for="IncludePerformanceLog">Performance Log</label>
+            <br />
+            <input type="checkbox" id="IncludeIISVirtualDirectories" name=" -IncludeIISVirtualDirectories" onchange="UpdateOutputString();" />
+            <label for="IncludeIISVirtualDirectories">IIS VirtualDirectories</label>
+            <br />
+            <input type="checkbox" id="IncludeIISLog" name=" -IncludeIISLog" onchange="UpdateOutputString();" />
+            <label for="IncludeIISLog">IIS Log</label>
+            <br />
+            <input type="checkbox" id="IncludeFastSearchLog" name=" -IncludeFastSearchLog" onchange="UpdateOutputString();" />
+            <label for="IncludeFastSearchLog">Fast search log (ULS log)</label>
+            <br />
+            <input type="checkbox" id="IncludeFIPS" name=" -IncludeFIPS" onchange="UpdateOutputString();" />
+            <label for="IncludeFIPS">
+          FIPS (Forefront Information Protection Service) log
+        </label>
+            <br />
+        </div>
+
+        <h2>Transport</h2>
+        <div id="transport"></div>
+
+        <h2>Date range</h2>
+        <div id="date">
+            <input type="checkbox" id="UseDateTime" name="UseDateTime" onchange="ToggleDateTime(); UpdateOutputString();" />
+            <label for="UseDateTime">UseDateTime</label>
+            <div id="UseFromDateTimeOnlyField" style="visibility: hidden;">
+                <input type="checkbox" id="UseFromDateTimeOnly" name="UseFromDateTimeOnly" onchange="ToggleDateTime(); UpdateOutputString();" />
+                <label for="UseFromDateTimeOnly">UseFromDateTimeOnly</label>
+            </div>
+            <br />
+            <div id="FromDateTimeField" style="visibility: hidden;">
+                <input type="date" name="FromDateTime" id="FromDateTime" onchange="ToggleDateTime(); UpdateOutputString();" />
+                <label for="FromDateTime">FromDateTime</label>
+            </div>
+            <div id="ToDateTimeField" style="visibility: hidden;">
+                <input type="date" name="ToDateTime" id="ToDateTime" onchange="ToggleDateTime(); UpdateOutputString();" />
+                <label for="ToDateTime">ToDateTime</label>
+            </div>
+        </div>
+        <h2>Miscs</h2>
+        <input type="text" id="miscsFilterInput" onkeyup="filterMiscs()" placeholder="Search for log names.." title="Search box" />
+        <br />
+        <div id="miscs"></div>
+    </div>
+
+    <div id="outputArea">
+        <h2>ServerName</h2>
+        <input type="radio" id="Servername_UseDefaultSample" name="ServerName" checked onchange="ToggleDateTime(); UpdateOutputString();" />
+        <label for="Servername_UseDefaultSample">Default</label>
+        </br>
+        <input type="radio" id="Servername_UseAsterisk" name="ServerName" onchange="ToggleDateTime(); UpdateOutputString();" />
+        <label for="Servername_UseAsterisk">All (*)</label>
+        </br>
+        <input type="radio" id="Servername_UseInputWindow" name="ServerName" onchange="ToggleDateTime(); UpdateOutputString();" />
+        <label for="Servername_UseInputWindow">Use specific server names </label>
+        </br>
+        <textarea id="Servername_InputWindow" rows="5" cols="70" placeholder="One server per line (without comma, quotation mark, semicolon)" onchange="ToggleDateTime(); UpdateOutputString();"></textarea>
+
+
+        <h2>Output</h2>
+        <textarea id="Output" rows="5" cols="100"></textarea>
+        <br />
+        <button class="button" onclick="copyToClipboard('Output');">
+        Copy text
+      </button>
+        <div id="copiedOutput" style="visibility: hidden;" class="copied">
+            <!-- <div id="copiedOutput" class="copied"></div> -->
+            Copied!
+        </div>
+
+        <h2>ご案内文言例</h2>
+        <input type="checkbox" id="hybrid" name="hybrid" onchange="updateCustomerReadyOutputString();" />
+        <label for="hybrid">
+        Include Exchange Online info
+      </label>
+        <br />
+        <textarea id="CustomerReadyOutput" rows="40" cols="100"></textarea>
+        <br />
+        <button class="button" onclick="copyToClipboard('CustomerReadyOutput');">
+        Copy text
+      </button>
+        <div id="copiedCustomerReadyOutput" style="visibility: hidden;" class="copied">
+            Copied!
+        </div>
+    </div>
+
+    <script>
+        const prefix = `
+以下の手順で Exchange の構成情報を採取いただき、弊社までお寄せください。
+なお本スクリプトでは、様々な Exchange サーバーに関する構成情報を取得し、指定したパスにログ ファイルを出力します。設定変更などが行われることはございません。
+また、スクリプト実行によりサーバー側の負荷に影響を与えることは通常ございませんが、もし実行中に何らかの要因により負荷が上昇した場合には、Ctrl + C キーを押下し、途中で中断いただきますようお願いいたします。
+
+1. 以下のサイトにアクセスし、[ダウンロード] をクリックして "Collect-ExchangeInfo.ps1" をダウンロードします。
+
+  https://github.com/jpmessaging/CollectExchangeInfo/blob/master/README_JA_Customer.md
+
+2. ダウンロードしたスクリプトを任意の Exchange サーバーに保存します。
+3. ファイルを右クリックして、プロパティを開きます。
+4. [全般] タブにて、「このファイルは他のコンピューターから取得したものです。このコンピューターを保護するため、このファイルへのアクセスはブロックされる可能性があります。」というメッセージが表示されている場合には、[許可する] にチェックを入れます。
+5. 該当サーバーで管理者権限で Exchange 管理シェルを起動します。
+6. スクリプトを配置したフォルダーまで CD コマンドで移動し、以下のようにスクリプトを実行します。
+
+`
+
+        const suffix = `
+
+7. スクリプトが終了すると、"<組織名_採取日時>.zip" が出力されます。こちらの ZIP ファイルを弊社までお寄せください。
+    `
+
+        const suffixHybrid = `
+
+7. 続いて、Exchange Online に PowerShell 接続が可能な端末でも上記手順 1 ～ 4 までを実行します。
+8. PowerShell  から Exchange Online に接続します。
+9. スクリプトを配置したフォルダーまで CD コマンドで移動し、以下のようにスクリプトを実行します。
+
+  .\\Collect-ExchangeInfo.ps1 -Path \<出力先フォルダー パス\>
+  例)
+  c:\\Script>.\\Collect-ExchangeInfo.ps1 -Path 'c:\\temp'
+
+10. 手順 6 と手順 9 で出力された zip ファイルをそれぞれお寄せください。
+`
+
+        // The list is created on E19 with the following command
+        // ((ls "$env:ExchangeInstallPath\logging" -r -Directory | Resolve-Path  |?{$null -eq (Get-ChildItem -Directory $_)} |sort | %{$_ -split "logging\\" | select -last 1}).Replace(".\","").replace("\","\\") | %{"'" + $_ +"'"}) -join ","| clip
+        var loggingSubfolderNames = [
+            'ActivityLogs\\UAPErrorLog', 'AddressBook Service', 'ADDriver', 'UnifiedPolicy\\SupervisoryReviewAgent', 'AdvancedDataGovernanceLogs\\Retention\\RetentionPolicyAgent', 'AdvancedDataGovernanceLogs\\SupervisoryReview\\RoutingAgentExecution', 'Assistants\\AssistantsService', 'Assistants\\Submission', 'AuditingLogs\\AuditMonitorTraceLogs', 'AuditingLogs\\AuditPumperTraceLogs', 'AuditingOptics\\AdminAuditOptics', 'AuditingOptics\\AuditSearchOptics', 'AuditingOptics\\MailboxAuditOptics', 'AuthAdminLogs', 'Autodiscover', 'BigFunnelMetricsCollectionAssistant', 'BigFunnelQueryParityAssistant', 'BigFunnelRetryFeederTimeBasedAssistant', 'BodyFragmentExtractorLog', 'CalendarAssistantsLogs', 'CasSyncLogs', 'CleanupAssistantLog', 'CmdletInfra\\LocalPowerShell\\Cmdlet', 'CmdletInfra\\Others\\Cmdlet', 'CmdletInfra\\Powershell-Proxy\\AuthZ', 'CmdletInfra\\Powershell-Proxy\\Cmdlet', 'CmdletInfra\\Powershell-Proxy\\Http\\RequestMonitor', 'ComplianceProtocolLogs', 'ConditionalHandlers\\ActiveSync\\ConditionalRegistrations', 'ConditionalHandlers\\AutoDiscover\\ConditionalRegistrations', 'ConditionalHandlers\\EWS\\ConditionalRegistrations', 'ConditionalHandlers\\IMAP4\\ConditionalRegistrations', 'ConditionalHandlers\\OData\\ConditionalRegistrations', 'ConditionalHandlers\\POP3\\ConditionalRegistrations', 'ContactChangeLogging', 'ContactLinkingLogs', 'ConversationAggregationLog', 'ConversationProcessingLog', 'CosmosQueue', 'CRAInsightLog', 'DataGovernanceTagLogger', 'DCAdminActionsLog', 'DefaultViewIndexAssistantLog', 'Diagnostics\\AnalyzerLogs', 'Diagnostics\\CertificateLogs', 'Diagnostics\\ClientLocationAndLatencyLogs', 'Diagnostics\\COPSLogs', 'Diagnostics\\CosmosLog', 'Diagnostics\\DailyPerformanceLogs', 'Diagnostics\\Dumps', 'Diagnostics\\EtwTraces', 'Diagnostics\\ForensicTraces', 'Diagnostics\\Geneva\\Tier1', 'Diagnostics\\Geneva\\Tier2', 'Diagnostics\\HAHealthLogs', 'Diagnostics\\LatencyStacksTraces', 'Diagnostics\\MemoryDumps', 'Diagnostics\\PerformanceLogsToBeProcessed', 'Diagnostics\\Poison', 'Diagnostics\\ServiceLogs', 'Diagnostics\\Store', 'Diagnostics\\TraceArchive', 'Diagnostics\\Watermarks', 'DirectoryLogs\\Perf', 'ECP\\Activity', 'ECP\\Server', 'ECP\\ServerException', 'EventBasedAssistants\\MSExchangeMailboxAssistants', 'EventBasedAssistants\\MSExchangeSubmission', 'EventBasedAssistantsCollection\\AssistantsLoader', 'Ews', 'GoLocalLog', 'GriffinEventBasedAssistant\\Assistants', 'GriffinTimeBasedAssistants', 'HighAvailability', 'HttpProxy\\Autodiscover', 'HttpProxy\\Eas', 'HttpProxy\\Ecp', 'HttpProxy\\Ews', 'HttpProxy\\Mapi', 'HttpProxy\\Oab', 'HttpProxy\\Owa', 'HttpProxy\\OwaCalendar', 'HttpProxy\\PowerShell', 'HttpProxy\\Rest', 'HttpProxy\\RpcHttp', 'HttpRequestFiltering', 'IRMLogs', 'ItemAssistants', 'LASEntitiesLog', 'LocalQueue\\Exchange', 'lodctr_backups', 'MailboxAssistantsLog', 'MailboxAssistantsSlaReportLog', 'MailboxAssociationLog', 'MailboxReplicationService\\MRSAvailability', 'MailboxReplicationService\\RequestStates', 'MailboxReplicationService\\Reservations', 'MailboxRulesLog', 'MAPI AddressBook Service', 'MapiHttp\\Mailbox', 'Migration', 'MitigationService', 'Monitoring\\ECP\\EacBackEndLogonProbe', 'Monitoring\\ECP\\EacBackEndPingProbe', 'Monitoring\\Monitoring\\MonitoringDiagnosticLogs\\MSExchangeHMHost', 'Monitoring\\Monitoring\\MSExchangeHMRecovery\\ActiveMonitoringTraceLogs', 'Monitoring\\Monitoring\\MSExchangeHMRecovery\\Errors', 'Monitoring\\Monitoring\\MSExchangeHMRecovery\\RecoveryAction', 'Monitoring\\Monitoring\\MSExchangeHMWorker\\ActiveMonitoringTraceLogs', 'Monitoring\\Monitoring\\MSExchangeHMWorker\\Errors', 'Monitoring\\Monitoring\\MSExchangeHMWorker\\RecoveryAction', 'Monitoring\\OLS User Store - Query', 'Monitoring\\OWA\\MailboxProbe', 'Monitoring\\OWA\\ProtocolProbe', 'Monitoring\\PersistedGlobalRecoveryAction', 'Monitoring\\Search', 'MonitoringLogs\\STx', 'NotificationBroker\\Client', 'OABDownload', 'OABGeneratorLog', 'OABGeneratorSimpleLog', 'OAuthOutbound', 'OWA\\Client', 'OWA\\ClientTrace', 'OWA\\Server', 'OWA\\ServerTrace', 'OWAAnonymous', 'PeopleCentricTriageAssistant', 'PeopleInsights\\TBA', 'PeopleRelevance', 'PhotoGarbageCollector', 'photos', 'PolicyTip', 'PublicFolder', 'Query', 'RealtimeAnalyticsPublisherServicelet', 'RemindersAssistantLog', 'ResourceUsageLoggingLog', 'Rest', 'RightsManagement', 'RoutingUpdateModule\\Autodiscover', 'RoutingUpdateModule\\EAS', 'RoutingUpdateModule\\ECP', 'RoutingUpdateModule\\EWS', 'RoutingUpdateModule\\MapiAddressBook', 'RoutingUpdateModule\\MapiMailbox', 'RoutingUpdateModule\\OAB', 'RoutingUpdateModule\\OWA', 'RoutingUpdateModule\\Powershell', 'RoutingUpdateModule\\Rest', 'RoutingUpdateModule\\RPC', 'RPC Client Access', 'RpcHttp\\W3SVC1', 'RpcHttp\\W3SVC2', 'SafetyNetRedelivery', 'Search\\Dictionary', 'Search\\FileExtractionTimeBasedAssistant', 'Search\\LanguageDetection', 'Search\\NotificationsContentIndexingConnection', 'Search\\OnSaveContentIndexingConnection', 'Search\\RetryContentIndexingConnection', 'SecuredCosmosQueue', 'SetupLogs', 'SharePointSignalStore', 'Store', 'SystemCleanupFolderAssistants', 'TimerAssistants', 'TimerBrokerAssistant', 'TraceLogs', 'TransportRoles\\Logs\\Mailbox\\DeliveryAgentLog', 'TypeDeserialization\\Microsoft.Exchange.ServiceHost', 'TypeDeserialization\\mmc', 'TypeDeserialization\\MSExchangeDagMgmt', 'TypeDeserialization\\MSExchangeECPAppPool', 'TypeDeserialization\\MSExchangeHMWorker', 'TypeDeserialization\\MSExchangeMailboxReplication', 'TypeDeserialization\\MSExchangePowerShellAppPool', 'TypeDeserialization\\msexchangerepl', 'TypeDeserialization\\powershell', 'UnifiedPolicy\\DlpPolicyAgent', 'UnifiedPolicy\\PolicyNudgeRules', 'UnifiedPolicy\\SyncAgent', 'Update\\exe', 'Update\\msi', 'WorkloadManagement'
+        ]
+        var manualOverrideSubfolderNames = ['MAPI Client Access', 'MailboxReplicationService']
+        loggingSubfolderNames = loggingSubfolderNames.concat(manualOverrideSubfolderNames)
+
+        // MEMO: From E16
+        // "ActivityLogs\\UAPErrorLog","AddressBook Service","ADDriver","AdvancedDataGovernanceLogs\\Logging\\UnifiedPolicy\\SupervisoryReviewAgent","AdvancedDataGovernanceLogs\\Retention\\RetentionPolicyAgent","AdvancedDataGovernanceLogs\\SupervisoryReview\\RoutingAgentExecution","Assistants\\AssistantsService","Assistants\\Submission","AuditingLogs\\AuditMonitorTraceLogs","AuditingLogs\\AuditPumperTraceLogs","AuditingOptics\\AdminAuditOptics","AuthAdminLogs","Autodiscover","BigFunnelMetricsCollectionAssistant","BigFunnelQueryParityAssistant","BodyFragmentExtractorLog","CalendarAssistantsLogs","CasSyncLogs","CleanupAssistantLog","CmdletInfra\\LocalPowerShell\\Cmdlet","CmdletInfra\\Others\\Cmdlet","CmdletInfra\\Powershell-Proxy\\AuthZ","CmdletInfra\\Powershell-Proxy\\Cmdlet","CmdletInfra\\Powershell-Proxy\\Http\\RequestMonitor","ComplianceProtocolLogs","ConditionalHandlers\\ActiveSync\\ConditionalRegistrations","ConditionalHandlers\\AutoDiscover\\ConditionalRegistrations","ConditionalHandlers\\EWS\\ConditionalRegistrations","ConditionalHandlers\\IMAP4\\ConditionalRegistrations","ConditionalHandlers\\OData\\ConditionalRegistrations","ConditionalHandlers\\POP3\\ConditionalRegistrations","ContactChangeLogging","ContactLinkingLogs","ConversationAggregationLog","ConversationProcessingLog","CosmosQueue","CRAInsightLog","Data\\Serialization","DataGovernanceTagLogger","DCAdminActionsLog","DefaultViewIndexAssistantLog","Diagnostics\\AnalyzerLogs","Diagnostics\\CertificateLogs","Diagnostics\\ClientLocationAndLatencyLogs","Diagnostics\\COPSLogs","Diagnostics\\CosmosLog","Diagnostics\\DailyPerformanceLogs","Diagnostics\\Dumps","Diagnostics\\EtwTraces","Diagnostics\\ForensicTraces","Diagnostics\\Geneva","Diagnostics\\HAHealthLogs","Diagnostics\\LatencyStacksTraces","Diagnostics\\MemoryDumps","Diagnostics\\PerformanceLogsToBeProcessed","Diagnostics\\Poison","Diagnostics\\ServiceLogs","Diagnostics\\Store","Diagnostics\\TraceArchive","Diagnostics\\Watermarks","DirectoryLogs\\Perf","ECP\\Activity","ECP\\Server","EventBasedAssistants\\MSExchangeMailboxAssistants","EventBasedAssistants\\MSExchangeSubmission","EventBasedAssistantsCollection\\AssistantsLoader","Ews","GoLocalLog","GriffinEventBasedAssistant\\Assistants","GriffinTimeBasedAssistants","HighAvailability","HttpProxy\\Autodiscover","HttpProxy\\Eas","HttpProxy\\Ecp","HttpProxy\\Ews","HttpProxy\\Mapi","HttpProxy\\Oab","HttpProxy\\Owa","HttpProxy\\OwaCalendar","HttpProxy\\PowerShell","HttpProxy\\RpcHttp","IRMLogs","ItemAssistants","LASEntitiesLog","LocalQueue\\Exchange","lodctr_backups","MailboxAssistantsLog","MailboxAssistantsSlaReportLog","MailboxAssociationLog","MailboxReplicationService\\MRSAvailability","MailboxReplicationService\\RequestStates","MailboxRulesLog","MAPI AddressBook Service","MapiHttp\\Mailbox","Migration","Monitoring\\ECP\\EacBackEndLogonProbe","Monitoring\\ECP\\EacBackEndPingProbe","Monitoring\\Monitoring\\MonitoringDiagnosticLogs\\MSExchangeHMHost","Monitoring\\Monitoring\\MSExchangeHMRecovery\\ActiveMonitoringTraceLogs","Monitoring\\Monitoring\\MSExchangeHMRecovery\\Errors","Monitoring\\Monitoring\\MSExchangeHMRecovery\\RecoveryAction","Monitoring\\Monitoring\\MSExchangeHMWorker\\ActiveMonitoringTraceLogs","Monitoring\\Monitoring\\MSExchangeHMWorker\\Errors","Monitoring\\Monitoring\\MSExchangeHMWorker\\RecoveryAction","Monitoring\\OLS User Store - Query","Monitoring\\OWA\\MailboxProbe","Monitoring\\Search","MonitoringLogs\\STx","NotificationBroker\\Client","NotificationBroker\\Service","OABDownload","OABGeneratorLog","OABGeneratorSimpleLog","OWA\\Client","OWA\\ClientTrace","OWA\\Server","OWA\\ServerTrace","PeopleCentricTriageAssistant","PeopleInsights\\TBA","PeopleRelevance","PhotoGarbageCollector","photos","PolicyTip","Query","RealtimeAnalyticsPublisherServicelet","RemindersAssistantLog","ResourceUsageLoggingLog","Rest","RightsManagement","RoutingUpdateModule\\Autodiscover","RoutingUpdateModule\\EAS","RoutingUpdateModule\\ECP","RoutingUpdateModule\\EWS","RoutingUpdateModule\\MapiAddressBook","RoutingUpdateModule\\MapiMailbox","RoutingUpdateModule\\OAB","RoutingUpdateModule\\OWA","RoutingUpdateModule\\Powershell","RoutingUpdateModule\\Rest","RoutingUpdateModule\\RPC","RPC Client Access","RpcHttp\\W3SVC1","RpcHttp\\W3SVC2","Search\\Crawler","Search\\Dictionary","Search\\FileExtractionTimeBasedAssistant","Search\\IndexRepairAssistant","Search\\LanguageDetection","SecuredCosmosQueue","SetupLogs","SharePointSignalStore","Store","SystemCleanupFolderAssistants","TimerAssistants","TimerBrokerAssistant","TraceLogs","TransportRoles\\Logs\\Mailbox\\DeliveryAgentLog","TypeDeserialization\\Microsoft.Exchange.ServiceHost","TypeDeserialization\\MSExchangeECPAppPool","TypeDeserialization\\MSExchangeHMHost","TypeDeserialization\\MSExchangePowerShellAppPool","TypeDeserialization\\powershell","UnifiedPolicy\\DlpPolicyAgent","UnifiedPolicy\\PolicyNudgeRules","UnifiedPolicy\\SyncAgent","WorkloadManagement"
+
+        // The list is copied from ValidateSet on CollectExhangeInfo
+        const transportParameters = [
+            'Connectivity',
+            'MessageTracking',
+            'SendProtocol',
+            'ReceiveProtocol',
+            'RoutingTable',
+            'Queue',
+        ]
+
+        function convertToYYYYmmdd(datetime) {
+            var yyyy = datetime.getFullYear()
+            var mm = ('00' + (datetime.getMonth() + 1)).slice(-2)
+            var dd = ('00' + datetime.getDate()).slice(-2)
+            return yyyy + '-' + mm + '-' + dd
+        }
+
+        // Create each checkbox and label based on loggingSubfolderNames and transportParameters
+        function createElements(list, id) {
+            list.forEach((element) => {
+                const lineBreak = document.createElement('br')
+
+                // Create checkbox
+                var checkbox = document.createElement('input')
+                checkbox.setAttribute('type', 'checkbox')
+                checkbox.setAttribute('name', element)
+                checkbox.setAttribute('id', element)
+                checkbox.onclick = function() {
+                    UpdateOutputString()
+                }
+
+                // Create label
+                var label = document.createElement('label')
+                label.setAttribute('for', element)
+                label.appendChild(document.createTextNode(element))
+                label.appendChild(lineBreak)
+
+                document.getElementById(id).appendChild(checkbox)
+                document.getElementById(id).appendChild(label)
+            })
+        }
+
+        function initialize() {
+            createElements(transportParameters, 'transport')
+            createElements(loggingSubfolderNames, 'miscs')
+
+            var date = new Date()
+            document.getElementById('ToDateTime').value = convertToYYYYmmdd(date)
+            date.setDate(date.getDate() - 2)
+            document.getElementById('FromDateTime').value = convertToYYYYmmdd(date)
+            UpdateOutputString()
+
+        }
+
+        // main function
+        // Update output string when any check box state is changed
+        function UpdateOutputString() {
+            var resultString =
+                ".\\Collect-ExchangeInfo.ps1 -Path '\<出力先フォルダー パス\>' -servers:"
+            var mainList = document
+                .getElementById('main')
+                .getElementsByTagName('input')
+
+            /* Add server name */
+            if (document.getElementById('Servername_UseDefaultSample').checked) {
+                resultString += "'\<採取対象のサーバー名\>'"
+            } else if (document.getElementById('Servername_UseAsterisk').checked) {
+                resultString += "*"
+            } else if (document.getElementById('Servername_UseInputWindow').checked) {
+                resultString += "'" + document.getElementById("Servername_InputWindow").value.split("\n").filter(v => v).join("','") + "'"
+            }
+
+
+
+            /* Add main swithes e.g. IncludeEventLogs */
+            for (let i = 0; i < mainList.length; i++) {
+                if (mainList[i].checked) {
+                    resultString += mainList[i].name
+                }
+            }
+
+            /* Add IncludeTransportLog */
+            var transportList = document
+                .getElementById('transport')
+                .getElementsByTagName('input')
+            var checkedTransportList = []
+            for (let i = 0; i < transportList.length; i++) {
+                if (transportList[i].checked) {
+                    checkedTransportList.push(transportList[i].name)
+                }
+            }
+            if (checkedTransportList.length > 0) {
+                resultString +=
+                    ' -IncludeTransportLog:' + checkedTransportList.join(',')
+            }
+
+            /* Add Datetime */
+            if (document.getElementById('UseDateTime').checked) {
+                var FromDateTime = document
+                    .getElementById('FromDateTime')
+                    .value.replaceAll('-', '/')
+                resultString += " -FromDateTime:'" + FromDateTime + "'"
+
+                if (!document.getElementById('UseFromDateTimeOnly').checked) {
+                    var ToDateTime = document
+                        .getElementById('ToDateTime')
+                        .value.replaceAll('-', '/')
+                    resultString += " -ToDateTime:'" + ToDateTime + "'"
+
+                }
+            }
+
+            /* Add Miscs */
+            var miscsList = document
+                .getElementById('miscs')
+                .getElementsByTagName('input')
+            var checkedMiscsList = []
+            for (let i = 0; i < miscsList.length; i++) {
+                if (miscsList[i].checked) {
+                    checkedMiscsList.push("'" + miscsList[i].name + "'")
+                }
+            }
+            if (checkedMiscsList.length > 0) {
+                resultString += ' -IncludeExchangeLog:' + checkedMiscsList.join(',')
+            }
+
+            document.getElementById('Output').value = resultString
+            updateCustomerReadyOutputString()
+        }
+
+        // Filter Miscs based on input field
+        function filterMiscs() {
+            var input = document.getElementById('miscsFilterInput')
+            var filter = input.value.toUpperCase()
+            var miscsList = document
+                .getElementById('miscs')
+                .getElementsByTagName('input')
+
+            // Loop through all list items, and hide those who don't match the search query
+            for (var i = 0; i < miscsList.length; i++) {
+                var txtValue = miscsList[i].name
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    // Show both input element and corresponding label
+                    miscsList[i].style.display = ''
+                    getLabel(miscsList[i].name).style.display = ''
+                } else {
+                    // Hide both input element and corresponding label
+                    miscsList[i].style.display = 'none'
+                    getLabel(miscsList[i].name).style.display = 'none'
+                }
+            }
+        }
+
+        // Return corresponding label that matched checkbox name
+        function getLabel(checkboxName) {
+            var labelList = document
+                .getElementById('miscs')
+                .getElementsByTagName('label')
+            for (let i = 0; i < labelList.length; i++) {
+                if (labelList[i].htmlFor == checkboxName) {
+                    return labelList[i]
+                }
+            }
+        }
+
+        function ToggleDateTime() {
+            if (document.getElementById('UseDateTime').checked) {
+                document.getElementById('UseFromDateTimeOnlyField').style.visibility = 'visible'
+                document.getElementById('FromDateTimeField').style.visibility = 'visible'
+                if (!document.getElementById('UseFromDateTimeOnly').checked) {
+                    document.getElementById('ToDateTimeField').style.visibility = 'visible'
+                } else {
+                    document.getElementById('ToDateTimeField').style.visibility = 'hidden'
+                }
+
+            } else {
+                document.getElementById('FromDateTimeField').style.visibility = 'hidden'
+                document.getElementById('ToDateTimeField').style.visibility = 'hidden'
+                document.getElementById('UseFromDateTimeOnlyField').style.visibility = 'hidden'
+            }
+        }
+
+        function copyToClipboard(id) {
+            var output = document.getElementById(id)
+
+            /* Select the text field */
+            output.select()
+
+            /* Copy the text inside the text field */
+            document.execCommand('copy')
+
+        }
+
+        function updateCustomerReadyOutputString() {
+            const cmdlet = '  ' + document.getElementById('Output').value
+            const cmdletExmaple =
+                `
+  例)
+  c:\\Script>` +
+                document
+                .getElementById('Output')
+                .value.replace('\<出力先フォルダー パス\>', 'c:\\temp')
+                .replace("'\<採取対象のサーバー名\>'", "'ServerA','ServerB'")
+
+            if (document.getElementById('hybrid').checked) {
+                document.getElementById('CustomerReadyOutput').value =
+                    prefix + cmdlet + cmdletExmaple + suffixHybrid
+            } else {
+                document.getElementById('CustomerReadyOutput').value =
+                    prefix + cmdlet + cmdletExmaple + suffix
+            }
+        }
+
+        var serverNameInputField = document.getElementById('Servername_InputWindow');
+        serverNameInputField.addEventListener('input', UpdateOutputString);
+    </script>
+</body>
+
+</html>
