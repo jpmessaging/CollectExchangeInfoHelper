@@ -64,10 +64,10 @@
 
     <div id="inputArea">
         <div id="main">
-            <input type="checkbox" id="IncludeEventLogs" name=" -IncludeEventLogs" onchange="UpdateOutputString();" />
+            <input type="checkbox" id="IncludeEventLogs" name=" -IncludeEventLogs" onchange="handleEventLogChecks('IncludeEventLogs');" />
             <label for="IncludeEventLogs">Event logs</label>
             <br />
-            <input type="checkbox" id="IncludeEventLogsWithCrimson" name=" -IncludeEventLogsWithCrimson" onchange="UpdateOutputString();" />
+            <input type="checkbox" id="IncludeEventLogsWithCrimson" name=" -IncludeEventLogsWithCrimson" onchange="handleEventLogChecks('IncludeEventLogsWithCrimson');" />
             <label for="IncludeEventLogsWithCrimson">
           Event logs including crimson logs (Managed availablity, High
           availability, etc...)
@@ -420,8 +420,38 @@
             }
         }
 
+        function handleEventLogChecks(checkedId) {
+            var eventLogsCheckbox = document.getElementById('IncludeEventLogs');
+            var eventLogsLabel = document.querySelector('label[for="IncludeEventLogs"]');
+            var crimsonCheckbox = document.getElementById('IncludeEventLogsWithCrimson');
+            var crimsonLabel = document.querySelector('label[for="IncludeEventLogsWithCrimson"]');
+
+            if (checkedId === 'IncludeEventLogs' && eventLogsCheckbox.checked) {
+                eventLogsCheckbox.style.opacity = 1;
+                eventLogsLabel.style.opacity = 1;
+                crimsonCheckbox.style.opacity = 0.3;
+                crimsonLabel.style.opacity = 0.3;
+                crimsonCheckbox.checked = false;
+            } 
+            else if (checkedId === 'IncludeEventLogsWithCrimson' && crimsonCheckbox.checked) {
+                crimsonCheckbox.style.opacity = 1;
+                crimsonLabel.style.opacity = 1;
+                eventLogsCheckbox.style.opacity = 0.3;
+                eventLogsLabel.style.opacity = 0.3;
+                eventLogsCheckbox.checked = false;
+            }
+            else {
+                eventLogsCheckbox.style.opacity = 1;
+                eventLogsLabel.style.opacity = 1;
+                crimsonCheckbox.style.opacity = 1;
+                crimsonLabel.style.opacity = 1;
+            }
+            UpdateOutputString();
+        }
+
         var serverNameInputField = document.getElementById('Servername_InputWindow');
         serverNameInputField.addEventListener('input', UpdateOutputString);
+
     </script>
 </body>
 
